@@ -16,4 +16,9 @@ $this->title = 'Upload Excel File';
     <?= Html::submitButton('Upload', ['class' => 'btn btn-primary']) ?>
 </div>
 
+<div class="form-group">
+    <?= Html::a('Download Excel', ['excel/download'], ['class' => 'btn btn-success']) ?>
+</div>
+
+
 <?php ActiveForm::end(); ?>

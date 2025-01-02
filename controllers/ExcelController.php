@@ -7,6 +7,9 @@ use yii\web\Controller;
 use yii\web\UploadedFile;
 use app\models\UploadForm;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+
 
 class ExcelController extends Controller
 {
@@ -43,5 +46,43 @@ class ExcelController extends Controller
         }
 
         return $this->render('upload', ['model' => $model]);
+    }
+
+    public function actionDownload()
+    {
+        // ดึงข้อมูลจากฐานข้อมูล
+        $data = Yii::$app->db->createCommand('SELECT * FROM data_excel')->queryAll();
+
+        // สร้าง Spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // ตั้งชื่อหัวตาราง
+        $sheet->setCellValue('A1', 'ID');
+        $sheet->setCellValue('B1', 'Name');
+        $sheet->setCellValue('C1', 'Email');
+        $sheet->setCellValue('D1', 'Phone');
+
+        // เพิ่มข้อมูลลงในไฟล์
+        $rowNumber = 2; // เริ่มจากแถวที่ 2
+        foreach ($data as $row) {
+            $sheet->setCellValue('A' . $rowNumber, $row['id']);
+            $sheet->setCellValue('B' . $rowNumber, $row['name']);
+            $sheet->setCellValue('C' . $rowNumber, $row['email']);
+            $sheet->setCellValue('D' . $rowNumber, $row['phone']);
+            $rowNumber++;
+        }
+
+        // ตั้งชื่อไฟล์
+        $fileName = 'data_excel_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+        // เขียนไฟล์และดาวน์โหลด
+        $writer = new Xlsx($spreadsheet);
+        $filePath = Yii::getAlias('@webroot/uploads/') . $fileName;
+        $writer->save($filePath);
+
+        return Yii::$app->response->sendFile($filePath)->on(\yii\web\Response::EVENT_AFTER_SEND, function ($event) {
+            unlink($event->data);
+        }, $filePath);
     }
 }
